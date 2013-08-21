@@ -65,20 +65,7 @@ class Factory
      */
     public static function fromFile($filename, $returnConfigObject = false)
     {
-        $filepath = $filename;
-        if (!file_exists($filename)) {
-            $fromIncludePath = stream_resolve_include_path($filename);
-            if (!$fromIncludePath) {
-                throw new Exception\RuntimeException(sprintf(
-                    'Filename "%s" cannot be found relative to the working directory or the include_path ("%s")',
-                    $filename,
-                    get_include_path()
-                ));
-            }
-            $filepath = $fromIncludePath;
-        }
-
-        $pathinfo = pathinfo($filepath);
+        $pathinfo = pathinfo($filename);
 
         if (!isset($pathinfo['extension'])) {
             throw new Exception\RuntimeException(sprintf(
@@ -90,14 +77,14 @@ class Factory
         $extension = strtolower($pathinfo['extension']);
 
         if ($extension === 'php') {
-            if (!is_file($filepath) || !is_readable($filepath)) {
+            if (!is_file($filename) || !is_readable($filename)) {
                 throw new Exception\RuntimeException(sprintf(
                     "File '%s' doesn't exist or not readable",
                     $filename
                 ));
             }
 
-            $config = include $filepath;
+            $config = include $filename;
         } elseif (isset(static::$extensions[$extension])) {
             $reader = static::$extensions[$extension];
             if (!$reader instanceof Reader\ReaderInterface) {
@@ -106,7 +93,7 @@ class Factory
             }
 
             /** @var Reader\ReaderInterface $reader  */
-            $config = $reader->fromFile($filepath);
+            $config = $reader->fromFile($filename);
         } else {
             throw new Exception\RuntimeException(sprintf(
                 'Unsupported config file extension: .%s',
@@ -155,8 +142,8 @@ class Factory
             );
         }
 
-        $extension          = substr(strrchr($filename, '.'), 1);
-        $directory          = dirname($filename);
+        $extension = substr(strrchr($filename, '.'), 1);
+        $directory = dirname($filename);
 
         if (!is_dir($directory)) {
             throw new Exception\RuntimeException(
